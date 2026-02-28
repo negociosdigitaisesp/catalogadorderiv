@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supabase Live — Resultados</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #090e1a;
+    --surface: #0f1624;
+    --surface2: #161e30;
+    --border: #1e2d4a;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --green: #00f5a0;
+    --red: #ff3b5c;
+    --gold: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    background: linear-gradient(135deg, #0f1624 0%, #161e30 50%, #0f1624 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+
+  .header-left { display: flex; align-items: center; gap: 16px; }
+
+  .logo-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--green), #10b981);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 20px rgba(0,245,160,0.3);
+    color: #fff;
+    font-weight: 900;
+  }
+
+  .logo-text h1 { font-size: 20px; font-weight: 700; color: #fff; }
+  .logo-text p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .status-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  main { padding: 32px 40px; max-width: 1400px; margin: 0 auto; }
+
+  /* KPI */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--green), #10b981);
+  }
+  .kpi-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .kpi-value { font-size: 36px; font-weight: 900; color: #fff; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  /* GRID */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  /* PANEL */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-title { font-size: 14px; font-weight: 600; color: #fff; }
+  .panel-badge {
+    font-size: 11px; font-weight: 600;
+    background: rgba(0,245,160,0.1);
+    color: var(--green);
+    border: 1px solid rgba(0,245,160,0.2);
+    border-radius: 12px;
+    padding: 3px 10px;
+  }
+
+  /* LISTA */
+  .ativo-list { padding: 20px 24px; }
+  .ativo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .ativo-name { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; width: 80px; flex-shrink: 0; }
+  .bar-wrap { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--green), #06b6d4); }
+  .ativo-count { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); width: 50px; text-align: right; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: var(--surface2); padding: 12px 16px; font-size: 11px; color: var(--muted); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border); }
+  tbody tr { border-bottom: 1px solid rgba(30,45,74,0.5); }
+  tbody td { padding: 12px 16px; font-size: 13px; color: var(--text); }
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  
+  .dir-call { display: inline-flex; background: rgba(0,245,160,0.1); color: var(--green); border: 1px solid rgba(0,245,160,0.25); border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+  .dir-put { display: inline-flex; background: rgba(255,59,92,0.1); color: var(--red); border: 1px solid rgba(255,59,92,0.25); border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+  
+  .wr-pill { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; background: rgba(124,58,237,0.15); color: #a78bfa; }
+  
+  .status-ok { color: var(--green); font-weight: 700; font-size: 11px; }
+
+  button.refresh {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  button.refresh:hover { background: rgba(0,212,255,0.1); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-icon">SB</div>
+    <div class="logo-text">
+      <h1>Supabase Live Preview</h1>
+      <p>tabela: hft_oracle_results | tipo: HORARIO</p>
+    </div>
+  </div>
+  <div class="header-right" style="display:flex;gap:16px;align-items:center;">
+    <button class="refresh" onclick="window.location.reload()">Atualizar F5</button>
+    <div class="status-badge"><div class="status-dot"></div> Conectado: Supabase Cloud</div>
+  </div>
+</header>
+
+<main>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Estratégias Lidas do BD</div>
+      <div class="kpi-value">8511</div>
+      <div class="kpi-sub">Já inseridas no Supabase</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Velas Analisadas</div>
+      <div class="kpi-value">441K</div>
+      <div class="kpi-sub">Base do ciclo atual</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Hipóteses (Ciclo)</div>
+      <div class="kpi-value">200</div>
+      <div class="kpi-sub">Múltiplas variações ativas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Cobertura Temporal</div>
+      <div class="kpi-value">24h</div>
+      <div class="kpi-sub">Toda a Grade Horária de 1440 mins</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- ATIVO BARS -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Estratégias Salvas / Ativo</span>
+        <span class="panel-badge">Ao Vivo</span>
+      </div>
+      <div class="ativo-list">
+
+        <div class="ativo-row">
+          <div class="ativo-name">BOOM1000</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100.0%"></div></div>
+          <div class="ativo-count">1440</div>
+        </div>
+        
+        <div class="ativo-row">
+          <div class="ativo-name">BOOM500</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100.0%"></div></div>
+          <div class="ativo-count">1440</div>
+        </div>
+        
+        <div class="ativo-row">
+          <div class="ativo-name">CRASH1000</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100.0%"></div></div>
+          <div class="ativo-count">1440</div>
+        </div>
+        
+        <div class="ativo-row">
+          <div class="ativo-name">CRASH500</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100.0%"></div></div>
+          <div class="ativo-count">1440</div>
+        </div>
+        
+        <div class="ativo-row">
+          <div class="ativo-name">R_10</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:39.09722222222222%"></div></div>
+          <div class="ativo-count">563</div>
+        </div>
+        
+        <div class="ativo-row">
+          <div class="ativo-name">R_75</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:38.611111111111114%"></div></div>
+          <div class="ativo-count">556</div>
+        </div>
+        
+        <div class="ativo-row">
+          <div class="ativo-name">R_25</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:37.98611111111111%"></div></div>
+          <div class="ativo-count">547</div>
+        </div>
+        
+        <div class="ativo-row">
+          <div class="ativo-name">R_100</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:37.84722222222222%"></div></div>
+          <div class="ativo-count">545</div>
+        </div>
+        
+        <div class="ativo-row">
+          <div class="ativo-name">R_50</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:37.5%"></div></div>
+          <div class="ativo-count">540</div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Top Oportunidades no Supabase</span>
+        <span class="panel-badge">Amostra Top 20</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Strategy ID</th>
+              <th>Ativo</th>
+              <th>Hora</th>
+              <th>Dir</th>
+              <th>Status</th>
+              <th>WR Gale 2</th>
+              <th>N Test</th>
+              <th>EV Real</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr>
+              <td class="mono">T1836_SEG_BOOM1000_G2</td>
+              <td>BOOM1000</td>
+              <td class="mono">18:36</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1836_SEG_BOOM500_G2</td>
+              <td>BOOM500</td>
+              <td class="mono">18:36</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.852</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1836_SEG_CRASH1000_G2</td>
+              <td>CRASH1000</td>
+              <td class="mono">18:36</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.850</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1836_SEG_CRASH500_G2</td>
+              <td>CRASH500</td>
+              <td class="mono">18:36</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.852</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1837_SEG_BOOM1000_G2</td>
+              <td>BOOM1000</td>
+              <td class="mono">18:37</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1837_SEG_BOOM500_G2</td>
+              <td>BOOM500</td>
+              <td class="mono">18:37</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1837_SEG_CRASH1000_G2</td>
+              <td>CRASH1000</td>
+              <td class="mono">18:37</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1837_SEG_CRASH500_G2</td>
+              <td>CRASH500</td>
+              <td class="mono">18:37</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.865</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1838_SEG_BOOM1000_G2</td>
+              <td>BOOM1000</td>
+              <td class="mono">18:38</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.850</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1838_SEG_BOOM500_G2</td>
+              <td>BOOM500</td>
+              <td class="mono">18:38</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.852</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1838_SEG_CRASH1000_G2</td>
+              <td>CRASH1000</td>
+              <td class="mono">18:38</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1839_SEG_BOOM1000_G2</td>
+              <td>BOOM1000</td>
+              <td class="mono">18:39</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1839_SEG_CRASH1000_G2</td>
+              <td>CRASH1000</td>
+              <td class="mono">18:39</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1839_SEG_CRASH500_G2</td>
+              <td>CRASH500</td>
+              <td class="mono">18:39</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.858</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1840_SEG_BOOM1000_G2</td>
+              <td>BOOM1000</td>
+              <td class="mono">18:40</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1840_SEG_CRASH1000_G2</td>
+              <td>CRASH1000</td>
+              <td class="mono">18:40</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1840_SEG_CRASH500_G2</td>
+              <td>CRASH500</td>
+              <td class="mono">18:40</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.853</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1841_SEG_BOOM1000_G2</td>
+              <td>BOOM1000</td>
+              <td class="mono">18:41</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.851</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1841_SEG_BOOM500_G2</td>
+              <td>BOOM500</td>
+              <td class="mono">18:41</td>
+              <td><span class="dir-put">▼ PUT</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.850</td>
+            </tr>
+        
+            <tr>
+              <td class="mono">T1841_SEG_CRASH1000_G2</td>
+              <td>CRASH1000</td>
+              <td class="mono">18:41</td>
+              <td><span class="dir-call">▲ CALL</span></td>
+              <td class="status-ok">APROVADO</td>
+              <td><span class="wr-pill">100.0%</span></td>
+              <td class="mono">0</td>
+              <td class="mono">+0.852</td>
+            </tr>
+        
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Auto Quant Discovery — Ao vivo do Supabase Cloud
+</footer>
+
+</body>
+</html>

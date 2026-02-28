@@ -1,0 +1,36 @@
+
+===========================================================
+ GRADE HORARIA DE ELITE — NOVA ENTRADA
+===========================================================
+ ID:         T0159_SEG_R75_G2
+ Ativo:      R_75
+ Horario:    01:59 UTC  |  SEG
+ Direcao:    PUT
+ Variacao:   V3
+ Status:     CONDICIONAL
+ Horario Condicional (90-95%)
+===========================================================
+ TABELA DE RECUPERACAO GALE 2
+===========================================================
+ Win de 1a:    53.3%  (entrada direta)
+ Win Gale 1:   26.7%  (recupera entrada perdida)
+ Win Gale 2:   10.0%  (recupera Gale 1 perdido)
+ Hit Total:    10.0%   (perda do ciclo completo)
+-----------------------------------------------------------
+ Win Rate G2:  90.00%  (Gale 1 + Gale 2 + 1a)
+ EV Gale 2:   -0.0297 unidades/ciclo
+ Score 30/7:   0.9000
+===========================================================
+ SIZING
+===========================================================
+ Stake Base:   0.5x
+ Max Gale:     2 entradas complementares
+ Stakes:       1.0 -> 2.2 -> 5.0 (total: 8.2 se hit)
+===========================================================
+ DIAGNOSTICO
+===========================================================
+ Condicional — padrão promissor mas aguarda confirmação (WR=90.0%, N=30, score=0.90)
+===========================================================
+ Descoberta:  2026-02-26 21:47 UTC
+ Valida ate:  2026-05-27 21:47 UTC
+===========================================================

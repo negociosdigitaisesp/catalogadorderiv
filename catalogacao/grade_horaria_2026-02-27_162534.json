@@ -1,0 +1,29 @@
+{
+  "_identificacao": {
+    "projeto": "ORACLE QUANT — Auto Quant Discovery",
+    "versao": "2.0",
+    "data_catalogacao": "2026-02-27 16:25 UTC",
+    "epoch_catalogacao": 1772209534,
+    "ativos_analisados": [
+      "R_10",
+      "R_25",
+      "R_50",
+      "R_75",
+      "R_100",
+      "CRASH500",
+      "CRASH1000",
+      "BOOM500",
+      "BOOM1000"
+    ],
+    "total_ativos": 9,
+    "registros_carregados": 43200,
+    "hipoteses_geradas": 200,
+    "padroes_minerados": 2242,
+    "aprovadas": 0,
+    "condicionais": 0,
+    "reprovadas": 2242,
+    "estrategias_escritas": 0,
+    "duracao_segundos": 74.25
+  },
+  "grade_horaria": []
+}

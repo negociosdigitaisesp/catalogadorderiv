@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install -r requirements.txt)",
+      "Bash(python -m pytest tests/test_math_engine.py -v --tb=short)",
+      "Bash(pip install websockets python-dotenv)",
+      "Bash(python -m pytest tests/test_sniper.py -v --tb=short)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(supabase --version)",
+      "Bash(supabase help)",
+      "Bash(supabase db --help)",
+      "Bash(pip install supabase aiosqlite psycopg2-binary pytest-asyncio)"
+    ]
+  }
+}

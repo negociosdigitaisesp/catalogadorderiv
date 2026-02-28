@@ -1,0 +1,27 @@
+# Segurança — nunca comitar credenciais
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Banco local
+catalog/catalog.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Node (frontend)
+node_modules/
+.next/
+venv/

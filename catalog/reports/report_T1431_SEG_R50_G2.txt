@@ -1,0 +1,36 @@
+
+===========================================================
+ GRADE HORARIA DE ELITE — NOVA ENTRADA
+===========================================================
+ ID:         T1431_SEG_R50_G2
+ Ativo:      R_50
+ Horario:    14:31 UTC  |  SEG
+ Direcao:    PUT
+ Variacao:   V4
+ Status:     CONDICIONAL
+ Horario Condicional (90-95%)
+===========================================================
+ TABELA DE RECUPERACAO GALE 2
+===========================================================
+ Win de 1a:    60.0%  (entrada direta)
+ Win Gale 1:   26.7%  (recupera entrada perdida)
+ Win Gale 2:   6.7%  (recupera Gale 1 perdido)
+ Hit Total:    6.7%   (perda do ciclo completo)
+-----------------------------------------------------------
+ Win Rate G2:  93.33%  (Gale 1 + Gale 2 + 1a)
+ EV Gale 2:   +0.2653 unidades/ciclo
+ Score 30/7:   0.8457
+===========================================================
+ SIZING
+===========================================================
+ Stake Base:   0.5x
+ Max Gale:     2 entradas complementares
+ Stakes:       1.0 -> 2.2 -> 5.0 (total: 8.2 se hit)
+===========================================================
+ DIAGNOSTICO
+===========================================================
+ Condicional — padrão promissor mas aguarda confirmação (WR=93.3%, N=30, score=0.85)
+===========================================================
+ Descoberta:  2026-02-26 22:09 UTC
+ Valida ate:  2026-05-27 22:09 UTC
+===========================================================

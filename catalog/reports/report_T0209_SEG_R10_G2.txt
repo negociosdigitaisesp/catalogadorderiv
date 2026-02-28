@@ -1,0 +1,36 @@
+
+===========================================================
+ GRADE HORARIA DE ELITE — NOVA ENTRADA
+===========================================================
+ ID:         T0209_SEG_R10_G2
+ Ativo:      R_10
+ Horario:    02:09 UTC  |  SEG
+ Direcao:    PUT
+ Variacao:   V4
+ Status:     APROVADO
+ Horario Condicional (90-95%)
+===========================================================
+ TABELA DE RECUPERACAO GALE 2
+===========================================================
+ Win de 1a:    60.0%  (entrada direta)
+ Win Gale 1:   26.7%  (recupera entrada perdida)
+ Win Gale 2:   6.7%  (recupera Gale 1 perdido)
+ Hit Total:    6.7%   (perda do ciclo completo)
+-----------------------------------------------------------
+ Win Rate G2:  93.33%  (Gale 1 + Gale 2 + 1a)
+ EV Gale 2:   +0.2653 unidades/ciclo
+ Score 30/7:   0.5600
+===========================================================
+ SIZING
+===========================================================
+ Stake Base:   1.0x
+ Max Gale:     2 entradas complementares
+ Stakes:       1.0 -> 2.2 -> 5.0 (total: 8.2 se hit)
+===========================================================
+ DIAGNOSTICO
+===========================================================
+ Elite (EV=+0.2653, WR=93.3%, P1A=60.0%)
+===========================================================
+ Descoberta:  2026-02-28 02:21 UTC
+ Valida ate:  2026-05-29 02:21 UTC
+===========================================================
