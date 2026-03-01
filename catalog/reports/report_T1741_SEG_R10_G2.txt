@@ -5,21 +5,21 @@
  ID:         T1741_SEG_R10_G2
  Ativo:      R_10
  Horario:    17:41 UTC  |  SEG
- Direcao:    PUT
+ Direcao:    CALL
  Variacao:   V4
  Status:     CONDICIONAL
  Horario Condicional (90-95%)
 ===========================================================
  TABELA DE RECUPERACAO GALE 2
 ===========================================================
- Win de 1a:    53.3%  (entrada direta)
- Win Gale 1:   23.3%  (recupera entrada perdida)
- Win Gale 2:   16.7%  (recupera Gale 1 perdido)
+ Win de 1a:    46.7%  (entrada direta)
+ Win Gale 1:   26.7%  (recupera entrada perdida)
+ Win Gale 2:   20.0%  (recupera Gale 1 perdido)
  Hit Total:    6.7%   (perda do ciclo completo)
 -----------------------------------------------------------
  Win Rate G2:  93.33%  (Gale 1 + Gale 2 + 1a)
- EV Gale 2:   +0.2847 unidades/ciclo
- Score 30/7:   0.9029
+ EV Gale 2:   +0.2920 unidades/ciclo
+ Score 30/7:   0.5600
 ===========================================================
  SIZING
 ===========================================================
@@ -29,8 +29,8 @@
 ===========================================================
  DIAGNOSTICO
 ===========================================================
- Condicional — padrão promissor mas aguarda confirmação (WR=93.3%, N=30, score=0.90)
+ Lucrativo mas não Elite (P1A=46.7%<55%)
 ===========================================================
- Descoberta:  2026-02-26 21:41 UTC
- Valida ate:  2026-05-27 21:41 UTC
+ Descoberta:  2026-02-28 18:01 UTC
+ Valida ate:  2026-05-29 18:01 UTC
 ===========================================================

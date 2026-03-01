@@ -9,7 +9,19 @@
       "Bash(supabase --version)",
       "Bash(supabase help)",
       "Bash(supabase db --help)",
-      "Bash(pip install supabase aiosqlite psycopg2-binary pytest-asyncio)"
+      "Bash(pip install supabase aiosqlite psycopg2-binary pytest-asyncio)",
+      "Bash(psql \"postgresql://postgres:1CIwYGQv09MUQA@db.ypqekkkrfklaqlzhkbwg.supabase.co:5432/postgres\" -f data_lake/sql/01_create_schema.sql -f data_lake/sql/02_create_hft_raw_metrics.sql -f data_lake/sql/03_view_fv1_minuto_solido.sql -f data_lake/sql/04_view_fv2_minuto_de_primeira.sql -f data_lake/sql/05_view_fv3_minuto_quente.sql -f data_lake/sql/06_view_fv4_minuto_resiliente.sql -f data_lake/sql/07_view_fv5_minuto_dominante.sql -f data_lake/sql/08_view_grade_unificada.sql)",
+      "Bash(py -3 --version)",
+      "Bash(py --version)",
+      "Bash(py -3 -c \"import psycopg2; print\\(''psycopg2 OK''\\)\")",
+      "Bash(py -3 -c \"import supabase; print\\(''supabase OK''\\)\")",
+      "Bash(py -3 -m pip install psycopg2-binary --quiet)",
+      "Bash(py -3 -c \"import psycopg2; print\\(''psycopg2 OK'', psycopg2.__version__\\)\")",
+      "Bash(py -3:*)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3 catalogar_completo.py)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3 lake_runner.py)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3 lake_exporter.py)",
+      "Bash(PYTHONIOENCODING=utf-8 py -3 -c \":*)"
     ]
   }
 }

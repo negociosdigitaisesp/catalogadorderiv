@@ -7,30 +7,30 @@
  Horario:    07:51 UTC  |  SEG
  Direcao:    PUT
  Variacao:   V4
- Status:     APROVADO
+ Status:     CONDICIONAL
  Horario Condicional (90-95%)
 ===========================================================
  TABELA DE RECUPERACAO GALE 2
 ===========================================================
- Win de 1a:    60.0%  (entrada direta)
- Win Gale 1:   26.7%  (recupera entrada perdida)
+ Win de 1a:    53.3%  (entrada direta)
+ Win Gale 1:   33.3%  (recupera entrada perdida)
  Win Gale 2:   6.7%  (recupera Gale 1 perdido)
  Hit Total:    6.7%   (perda do ciclo completo)
 -----------------------------------------------------------
  Win Rate G2:  93.33%  (Gale 1 + Gale 2 + 1a)
- EV Gale 2:   +0.2653 unidades/ciclo
+ EV Gale 2:   +0.2667 unidades/ciclo
  Score 30/7:   0.9029
 ===========================================================
  SIZING
 ===========================================================
- Stake Base:   1.0x
+ Stake Base:   0.5x
  Max Gale:     2 entradas complementares
  Stakes:       1.0 -> 2.2 -> 5.0 (total: 8.2 se hit)
 ===========================================================
  DIAGNOSTICO
 ===========================================================
- Elite (EV=+0.2653, WR=93.3%, P1A=60.0%)
+ Lucrativo mas não Elite (P1A=53.3%<55%)
 ===========================================================
- Descoberta:  2026-02-28 02:20 UTC
- Valida ate:  2026-05-29 02:20 UTC
+ Descoberta:  2026-02-28 17:59 UTC
+ Valida ate:  2026-05-29 17:59 UTC
 ===========================================================

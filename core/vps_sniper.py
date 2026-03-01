@@ -236,9 +236,10 @@ async def _disparar_sinal(
     tipo: str,     # "PRE_SIGNAL" ou "CONFIRMED"
     epoch: int,
     audit: deque,
+    table_name: str,
 ) -> None:
     """
-    Insere um sinal (PRE_SIGNAL ou CONFIRMED) na tabela hft_catalogo_estrategias.
+    Insere um sinal (PRE_SIGNAL ou CONFIRMED) na tabela especificada no Supabase.
 
     O campo `contexto` carrega o snapshot estatístico que o Front-end
     exibirá ao cliente para justificar a entrada.
@@ -283,7 +284,7 @@ async def _disparar_sinal(
     try:
         print(f"DEBUG DB: Payload sendo enviado: {payload}")
         await asyncio.to_thread(
-            lambda: sb.table(_SIGNAL_TABLE).insert(payload).execute()
+            lambda: sb.table(table_name).insert(payload).execute()
         )
         logger.info(
             "[SNIPER] %-12s %s @ %s → %s (sizing=%.1fx | WR=%.1f%%)",
@@ -325,6 +326,7 @@ class DerivSniper:
         token:   Optional[str],
         db:      Any,
         config_path: str = "config.json",
+        table_name: str = _SIGNAL_TABLE,
     ) -> None:
         # Suporta tanto config já carregado quanto path para o arquivo
         if isinstance(config, str):
@@ -346,6 +348,7 @@ class DerivSniper:
         self._sb       = db.client if hasattr(db, "client") else db
         self._epoch_sync = EpochSync(self._app_id)
         self._audit:  deque = deque(maxlen=_MAX_AUDIT_BUFFER)
+        self._table_name = table_name
 
         # Flag anti-duplo: garante 1 disparo por (tipo, strategy_id) por segundo.
         # Chave: "PRE_SIGNAL_T1430_SEG_R100_G2"  Valor: epoch_segundo em que disparou
@@ -416,7 +419,7 @@ class DerivSniper:
 
                 tarefas = [
                     _disparar_sinal(
-                        self._sb, slot, "PRE_SIGNAL", epoch_confirmado, self._audit
+                        self._sb, slot, "PRE_SIGNAL", epoch_confirmado, self._audit, self._table_name
                     )
                     for slot in self._agenda_index[alvo_hh_mm]
                     if not self._ja_disparou("PRE_SIGNAL", slot["strategy_id"], epoch_agora)
@@ -431,7 +434,7 @@ class DerivSniper:
             if alvo_hh_mm in self._agenda_index:
                 tarefas = [
                     _disparar_sinal(
-                        self._sb, slot, "CONFIRMED", epoch_agora, self._audit
+                        self._sb, slot, "CONFIRMED", epoch_agora, self._audit, self._table_name
                     )
                     for slot in self._agenda_index[alvo_hh_mm]
                     if not self._ja_disparou("CONFIRMED", slot["strategy_id"], epoch_agora)

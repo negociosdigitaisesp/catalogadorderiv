@@ -12,13 +12,13 @@
 ===========================================================
  TABELA DE RECUPERACAO GALE 2
 ===========================================================
- Win de 1a:    73.3%  (entrada direta)
- Win Gale 1:   6.7%  (recupera entrada perdida)
+ Win de 1a:    66.7%  (entrada direta)
+ Win Gale 1:   13.3%  (recupera entrada perdida)
  Win Gale 2:   13.3%  (recupera Gale 1 perdido)
  Hit Total:    6.7%   (perda do ciclo completo)
 -----------------------------------------------------------
  Win Rate G2:  93.33%  (Gale 1 + Gale 2 + 1a)
- EV Gale 2:   +0.2747 unidades/ciclo
+ EV Gale 2:   +0.2760 unidades/ciclo
  Score 30/7:   0.9029
 ===========================================================
  SIZING
@@ -29,8 +29,8 @@
 ===========================================================
  DIAGNOSTICO
 ===========================================================
- Elite (EV=+0.2747, WR=93.3%, P1A=73.3%)
+ Elite (EV=+0.2760, WR=93.3%, P1A=66.7%)
 ===========================================================
- Descoberta:  2026-02-28 02:21 UTC
- Valida ate:  2026-05-29 02:21 UTC
+ Descoberta:  2026-02-28 17:58 UTC
+ Valida ate:  2026-05-29 17:58 UTC
 ===========================================================
