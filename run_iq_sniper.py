@@ -36,7 +36,7 @@ logger = logging.getLogger("iq_sniper")
 from core.vps_sniper import DerivSniper, SupabaseManager
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "data_lake", "config_iq_lake.json")
-TARGET_TABLE = "iq_quant.signals"
+TARGET_TABLE = "iq_quant_signals"
 
 
 def load_grade_iq() -> list[dict]:
@@ -84,6 +84,7 @@ async def main() -> None:
     supabase_key = os.getenv("SUPABASE_KEY")
     deriv_app_id = os.getenv("DERIV_APP_ID", "85515")
     deriv_token  = os.getenv("DERIV_TOKEN")
+    client_id    = os.getenv("CLIENT_ID", "GLOBAL")  # <--- INJEÇÃO DO CLIENTE
 
     if not supabase_url or not supabase_key:
         logger.error("[CONFIG] SUPABASE_URL e SUPABASE_KEY devem estar no .env")
@@ -97,7 +98,7 @@ async def main() -> None:
     json.dump({"grade_horaria": grade}, tmp)
     tmp.close()
 
-    logger.info("[IQ_SNIPER] Destino: tabela %s", TARGET_TABLE)
+    logger.info("[IQ_SNIPER] Destino: tabela %s | Client ID: %s", TARGET_TABLE, client_id)
     logger.info("[IQ_SNIPER] Sincronizador de Epoch ativo. Iniciando...")
     
     sniper = DerivSniper(
@@ -106,6 +107,7 @@ async def main() -> None:
         token=deriv_token,
         db=db,
         table_name=TARGET_TABLE,  # <--- INJEÇÃO DE TABELA DA FÁBRICA GÊMEA
+        client_id=client_id,      # <--- INJEÇÃO DO CLIENT_ID
     )
 
     try:

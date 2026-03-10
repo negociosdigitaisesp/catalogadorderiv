@@ -237,6 +237,7 @@ async def _disparar_sinal(
     epoch: int,
     audit: deque,
     table_name: str,
+    client_id: str,
 ) -> None:
     """
     Insere um sinal (PRE_SIGNAL ou CONFIRMED) na tabela especificada no Supabase.
@@ -244,7 +245,7 @@ async def _disparar_sinal(
     O campo `contexto` carrega o snapshot estatístico que o Front-end
     exibirá ao cliente para justificar a entrada.
     """
-    sinal_id = f"{tipo}_{slot['strategy_id']}_{epoch}"
+    sinal_id = f"{tipo}_{slot['strategy_id']}_{epoch}_{client_id}"
 
     # Proteção anti-duplicata (ring-buffer de IDs recentes)
     if sinal_id in audit:
@@ -280,6 +281,10 @@ async def _disparar_sinal(
             },
         },
     }
+
+    # The centralized raw metrics table doesn't have client_id in the schema cache
+    if table_name != "hft_catalogo_estrategias":
+        payload["client_id"] = client_id
 
     try:
         print(f"DEBUG DB: Payload sendo enviado: {payload}")
@@ -327,6 +332,7 @@ class DerivSniper:
         db:      Any,
         config_path: str = "config.json",
         table_name: str = _SIGNAL_TABLE,
+        client_id: str = "GLOBAL",
     ) -> None:
         # Suporta tanto config já carregado quanto path para o arquivo
         if isinstance(config, str):
@@ -349,10 +355,17 @@ class DerivSniper:
         self._epoch_sync = EpochSync(self._app_id)
         self._audit:  deque = deque(maxlen=_MAX_AUDIT_BUFFER)
         self._table_name = table_name
+        self._client_id = client_id
 
         # Flag anti-duplo: garante 1 disparo por (tipo, strategy_id) por segundo.
         # Chave: "PRE_SIGNAL_T1430_SEG_R100_G2"  Valor: epoch_segundo em que disparou
         self._sent_this_second: dict[str, int] = {}
+
+        # Trava do MINUTO SOBERANO: "PRE_hh_mm" / "CONFIRMED_hh_mm" → epoch_minuto
+        # Garante que no máximo 1 sinal seja disparado por (tipo, hh_mm) por minuto,
+        # mesmo que a agenda contenha múltiplos ativos para o mesmo horário.
+        # Chave: "PRE_14:30"  Valor: epoch // 60 no momento do disparo
+        self._minuto_soberano_fired: dict[str, int] = {}
 
         # Mapa: "HH:MM" → [slot, slot, ...]  (multi-ativo por horário)
         self._agenda_index: dict[str, list[dict]] = {}
@@ -415,32 +428,79 @@ class DerivSniper:
             alvo_hh_mm  = f"{hh_prox:02d}:{mm_prox:02d}"
 
             if alvo_hh_mm in self._agenda_index:
+                # ── TRAVA DO MINUTO SOBERANO ────────────────────────────────
+                # epoch_minuto identifica unicamente este slot de 60s.
+                # Se já disparamos PRE_SIGNAL para este hh_mm neste minuto,
+                # o sistema está em modo duplicado — bloqueia imediatamente.
+                epoch_minuto   = epoch_agora // 60
+                sovereign_key  = f"PRE_{alvo_hh_mm}"
+                if self._minuto_soberano_fired.get(sovereign_key) == epoch_minuto:
+                    logger.info(
+                        "[SOVEREIGN] PRE_SIGNAL para %s ja disparado neste minuto (epoch_min=%d). Bloqueando.",
+                        alvo_hh_mm, epoch_minuto,
+                    )
+                    return
+                # ────────────────────────────────────────────────────────────
+
                 epoch_confirmado = epoch_agora + 10
 
+                slots = self._agenda_index[alvo_hh_mm]
                 tarefas = [
                     _disparar_sinal(
-                        self._sb, slot, "PRE_SIGNAL", epoch_confirmado, self._audit, self._table_name
+                        self._sb, slot, "PRE_SIGNAL", epoch_confirmado, self._audit, self._table_name, self._client_id
                     )
-                    for slot in self._agenda_index[alvo_hh_mm]
+                    for slot in slots
                     if not self._ja_disparou("PRE_SIGNAL", slot["strategy_id"], epoch_agora)
                 ]
                 if tarefas:
-                    await asyncio.gather(*tarefas, return_exceptions=True)
+                    self._minuto_soberano_fired[sovereign_key] = epoch_minuto
+                    
+                    async def _fire_seq(tasks):
+                        for t in tasks:
+                            try:
+                                await t
+                                await asyncio.sleep(0.1) # Stagger requests
+                            except Exception as e:
+                                logger.error("[SNIPER] Erro no _fire_seq (PRE_SIGNAL): %s", e)
+
+                    asyncio.create_task(_fire_seq(tarefas), name=f"pre_signal_{alvo_hh_mm}")
 
         # CONFIRMED: segundo :00 exato → dispara para este minuto
         elif ss == 0:
             alvo_hh_mm = f"{hh_epoch:02d}:{mm_epoch:02d}"
 
             if alvo_hh_mm in self._agenda_index:
+                # ── TRAVA DO MINUTO SOBERANO ────────────────────────────────
+                epoch_minuto  = epoch_agora // 60
+                sovereign_key = f"CONFIRMED_{alvo_hh_mm}"
+                if self._minuto_soberano_fired.get(sovereign_key) == epoch_minuto:
+                    logger.info(
+                        "[SOVEREIGN] CONFIRMED para %s ja disparado neste minuto (epoch_min=%d). Bloqueando.",
+                        alvo_hh_mm, epoch_minuto,
+                    )
+                    return
+                # ────────────────────────────────────────────────────────────
+
+                slots = self._agenda_index[alvo_hh_mm]
                 tarefas = [
                     _disparar_sinal(
-                        self._sb, slot, "CONFIRMED", epoch_agora, self._audit, self._table_name
+                        self._sb, slot, "CONFIRMED", epoch_agora, self._audit, self._table_name, self._client_id
                     )
-                    for slot in self._agenda_index[alvo_hh_mm]
+                    for slot in slots
                     if not self._ja_disparou("CONFIRMED", slot["strategy_id"], epoch_agora)
                 ]
                 if tarefas:
-                    await asyncio.gather(*tarefas, return_exceptions=True)
+                    self._minuto_soberano_fired[sovereign_key] = epoch_minuto
+                    
+                    async def _fire_seq(tasks):
+                        for t in tasks:
+                            try:
+                                await t
+                                await asyncio.sleep(0.1) # Stagger requests
+                            except Exception as e:
+                                logger.error("[SNIPER] Erro no _fire_seq (CONFIRMED): %s", e)
+
+                    asyncio.create_task(_fire_seq(tarefas), name=f"confirmed_{alvo_hh_mm}")
 
     # -------------------------------------------------------------------------
     # _main_loop — polling de 1 segundo

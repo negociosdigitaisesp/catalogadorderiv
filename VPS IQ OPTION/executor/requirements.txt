@@ -1,0 +1,4 @@
+git+https://github.com/Lu-Yi-Hsun/iqoptionapi.git
+httpx>=0.28.0
+pytest>=8.0.0
+pytest-mock>=3.0.0

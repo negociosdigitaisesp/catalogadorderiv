@@ -1,9 +1,9 @@
 """
-core/sanity_check.py — Validação de Sanidade da Fábrica Gêmea
+core/sanity_check.py - Validacao de Sanidade da Fabrica Gemea
 ==============================================================
-Verifica que a duplicação de schemas IQ/Deriv não criou conflitos:
-  1. Schema isolation (nomes de tabela não colidem)
-  2. Python module isolation (imports não sobrescrevem)
+Verifica que a duplicacao de schemas IQ/Deriv nao criou conflitos:
+  1. Schema isolation (nomes de tabela nao colidem)
+  2. Python module isolation (imports nao sobrescrevem)
   3. ENV variable isolation (chaves Deriv vs IQ separadas)
   4. Database file isolation (catalog.db vs catalog_iq.db)
 """
@@ -22,13 +22,13 @@ ALL_OK = True
 
 
 def ok(msg):
-    print(f"  \u2705 [OK]  {msg}")
+    print(f"  [OK]  {msg}")
 
 
 def fail(msg):
     global ALL_OK
     ALL_OK = False
-    print(f"  \u274c [FAIL] {msg}")
+    print(f"  [FAIL] {msg}")
 
 
 def sep(title):
@@ -37,9 +37,9 @@ def sep(title):
     print(f"{'='*60}")
 
 
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 # CHECK 1: Schema Isolation no Supabase
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 def check_schema_isolation():
     sep("CHECK 1: Schema Isolation (Supabase)")
 
@@ -80,7 +80,7 @@ def check_schema_isolation():
     else:
         fail("iq_quant schema nao encontrado")
 
-    # Verificar que tabelas NÃO têm nomes idênticos entre schemas diferentes
+    # Verificar que tabelas NAO tem nomes identicos entre schemas diferentes
     all_table_names = []
     for schema, tables in tables_by_schema.items():
         for t in tables:
@@ -88,7 +88,7 @@ def check_schema_isolation():
             all_table_names.append(fqn)
             print(f"    Encontrada: {fqn}")
 
-    # Nomes base não devem colidir entre hft_lake e iq_lake
+    # Nomes base nao devem colidir entre hft_lake e iq_lake
     hft_tables = set(tables_by_schema.get("hft_lake", []))
     iq_tables  = set(tables_by_schema.get("iq_lake", []))
     collision  = hft_tables & iq_tables
@@ -101,9 +101,9 @@ def check_schema_isolation():
     conn.close()
 
 
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 # CHECK 2: Python Module Isolation
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 def check_module_isolation():
     sep("CHECK 2: Python Module Isolation")
 
@@ -120,10 +120,10 @@ def check_module_isolation():
             loaded[mod_name] = mod
             ok(f"{desc} importa com sucesso: {mod_name}")
         except ImportError:
-            # Aceitável — pode não estar no sys.path
-            print(f"  \u26a0\ufe0f  [SKIP] {desc} nao encontrado no sys.path (aceitavel)")
+            # Aceitavel - pode nao estar no sys.path
+            print(f"  [SKIP] {desc} nao encontrado no sys.path (aceitavel)")
 
-    # Se ambos carregaram, verificar que não são o mesmo módulo
+    # Se ambos carregaram, verificar que nao sao o mesmo modulo
     if len(loaded) == 2:
         mod_a = loaded["agente.core.data_loader"]
         mod_b = loaded["core.iq_loader"]
@@ -142,7 +142,7 @@ def check_module_isolation():
         from core.iq_loader import IQLoader
         ok(f"IQLoader classe encontrada: {IQLoader}")
 
-        # Verificar métodos essenciais
+        # Verificar metodos essenciais
         essential = ["iq_timestamp_to_epoch", "fetch_candles_iq", "_enforce_rate_limit"]
         for method in essential:
             if hasattr(IQLoader, method):
@@ -154,9 +154,9 @@ def check_module_isolation():
         fail(f"Nao conseguiu importar core.iq_loader: {e}")
 
 
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 # CHECK 3: Database File Isolation
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 def check_db_isolation():
     sep("CHECK 3: Database File Isolation")
 
@@ -166,21 +166,21 @@ def check_db_isolation():
     if deriv_db != iq_db:
         ok(f"Deriv DB: {deriv_db}")
         ok(f"IQ DB:    {iq_db}")
-        ok("Paths de banco sao DISTINTOS — sem risco de contaminacao")
+        ok("Paths de banco sao DISTINTOS - sem risco de contaminacao")
     else:
         fail("Paths de banco sao IDENTICOS! Risco de contaminacao cruzada!")
 
 
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 # CHECK 4: ENV Variable Namespace
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 def check_env_namespace():
     sep("CHECK 4: ENV Variable Namespace")
 
     deriv_vars = ["DERIV_APP_ID", "DERIV_TOKEN"]
     iq_vars    = ["IQ_EMAIL", "IQ_PASSWORD"]
 
-    # Verificar que não há sobreposição de nomes
+    # Verificar que nao ha sobreposicao de nomes
     overlap = set(deriv_vars) & set(iq_vars)
     if overlap:
         fail(f"Variaveis de ambiente com nomes identicos: {overlap}")
@@ -198,12 +198,12 @@ def check_env_namespace():
         print(f"    {v}: {status}")
 
 
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 # MAIN
-# ─────────────────────────────────────────────────────────────
+# =============================================================
 def main():
     print("\n" + "=" * 60)
-    print("  SANITY CHECK — Fabrica Gemea (Deriv x IQ Option)")
+    print("  SANITY CHECK - Fabrica Gemea (Deriv x IQ Option)")
     print("=" * 60)
 
     check_schema_isolation()
@@ -213,10 +213,10 @@ def main():
 
     sep("RESULTADO FINAL")
     if ALL_OK:
-        print("  \u2705 TODOS OS CHECKS PASSARAM — Fabrica Gemea validada!")
+        print("  [OK] TODOS OS CHECKS PASSARAM - Fabrica Gemea validada!")
         print("  Nenhum conflito de nomes detectado.")
     else:
-        print("  \u274c FALHAS DETECTADAS — revise os itens acima.")
+        print("  [FAIL] FALHAS DETECTADAS - revise os itens acima.")
     print("=" * 60 + "\n")
 
 
