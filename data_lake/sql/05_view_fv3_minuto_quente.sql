@@ -18,8 +18,8 @@ FROM hft_lake.hft_raw_metrics
 WHERE
   -- N mínimo no histórico (base estatística)
   CASE
-    WHEN ativo IN ('R_10','R_25') THEN n_30d >= 20
-    ELSE n_30d >= 15
+    WHEN ativo IN ('R_10','R_25') THEN n_30d >= 4
+    ELSE n_30d >= 3
   END
   -- N mínimo nos últimos 3 dias (precisa ter ocorrido)
   AND n_3d >= 2

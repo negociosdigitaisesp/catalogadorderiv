@@ -23,7 +23,7 @@
 
 CREATE OR REPLACE VIEW hft_lake.vw_grade_suprema AS
 
--- NOTA: FV1-FV5 originais usam n_30d >= 20/15, bloqueando dados com <20 dias.
+-- NOTA: FV1-FV5 originais usam n_30d >= 4/15, bloqueando dados com <20 dias.
 -- O histórico atual tem média de ~13 dias (n_30d médio = 12.6).
 -- Esta view usa versões calibradas inline (n_min = 8) sem alterar os arquivos originais.
 

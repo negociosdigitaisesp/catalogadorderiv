@@ -20,7 +20,8 @@ ATIVOS = ["R_10", "R_25", "R_50", "R_75", "R_100"]
 DB_PATH = Path(__file__).parent.parent / "catalog" / "catalog.db"
 
 # Janelas de tempo em dias
-JANELA_30D = 30
+# Expandido de 30 → 60 para aumentar n_30d por horário e estabilizar WR
+JANELA_30D = 60
 JANELA_7D = 7
 JANELA_3D = 3
 

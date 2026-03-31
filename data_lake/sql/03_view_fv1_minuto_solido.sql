@@ -34,8 +34,8 @@ FROM hft_lake.hft_raw_metrics
 WHERE
   -- N mínimo por grupo de volatilidade
   CASE
-    WHEN ativo IN ('R_10','R_25') THEN n_30d >= 20
-    ELSE n_30d >= 15
+    WHEN ativo IN ('R_10','R_25') THEN n_30d >= 4
+    ELSE n_30d >= 3
   END
   -- WR G2 mínima (break-even de segurança)
   AND ((win_1a_30d + win_g1_30d + win_g2_30d)::numeric / NULLIF(n_30d,0)) >= 0.88

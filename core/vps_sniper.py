@@ -61,6 +61,13 @@ _PRE_SIGNAL_OFFSET   = 10       # seconds before target: disparo do PRE_SIGNAL
 _SIGNAL_TABLE        = "hft_catalogo_estrategias"
 _MAX_AUDIT_BUFFER    = 1440     # ring-buffer de sinais disparados (1 dia de minutos)
 
+# ─── Retry Supabase ────────────────────────────────────────────────────────────
+_DB_MAX_RETRIES      = 4        # tentativas máximas de INSERT (1 original + 3 retries)
+_DB_RETRY_BASE       = 1.5      # segundos base do backoff entre retries
+_DB_RETRY_MAX        = 15.0     # teto do backoff entre retries
+# Códigos HTTP transientes que merecem retry
+_DB_RETRYABLE_CODES  = {429, 500, 502, 503, 504}
+
 # Dias da semana: Python weekday() → 0 = Segunda, 6 = Domingo
 _WEEKDAY_MAP = {0: "SEG", 1: "TER", 2: "QUA", 3: "QUI", 4: "SEX", 5: "SAB", 6: "DOM"}
 
@@ -110,10 +117,11 @@ class EpochSync:
                 import socket
                 async with websockets.connect(
                     url,
-                    ping_interval=20,
-                    ping_timeout=30,
-                    close_timeout=10,
-                    family=socket.AF_INET,  # Força IPv4 para evitar timeout de rota IPv6
+                    ping_interval=30,      # envia keepalive a cada 30s (era 20s)
+                    ping_timeout=45,       # aguarda pong por 45s (era 30s)
+                    close_timeout=15,      # aguarda close frame por 15s (era 10s)
+                    open_timeout=20,       # timeout de handshake inicial
+                    family=socket.AF_INET, # Força IPv4 para evitar timeout de rota IPv6
                 ) as ws:
                     # Subscreve ticks do R_10 (ativo sempre aberto, mínima latência)
                     await ws.send(json.dumps({"ticks": "R_10", "subscribe": 1}))
@@ -230,6 +238,24 @@ def _parse_agenda(config_path: str) -> list[dict]:
 # 3. DISPARADOR DE SINAL (Supabase INSERT)
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _is_retryable_error(exc: Exception) -> bool:
+    """
+    Determina se um erro de Supabase é transiente (merece retry).
+    Detecta: 429, 500, 502, 503, 504 via código numérico ou texto da exceção.
+    """
+    exc_str = str(exc)
+    # Supabase SDK retorna dict com 'code' ou texto com o código
+    for code in _DB_RETRYABLE_CODES:
+        if f"'code': {code}" in exc_str or f'"code": {code}' in exc_str or f"code: {code}" in exc_str:
+            return True
+    # Fallback: detecta pela mensagem
+    transient_keywords = [
+        "502", "503", "504", "Bad gateway", "Service Unavailable",
+        "Gateway Timeout", "Too Many Requests", "connection", "timeout",
+    ]
+    return any(kw.lower() in exc_str.lower() for kw in transient_keywords)
+
+
 async def _disparar_sinal(
     sb: Client,
     slot: dict,
@@ -242,8 +268,8 @@ async def _disparar_sinal(
     """
     Insere um sinal (PRE_SIGNAL ou CONFIRMED) na tabela especificada no Supabase.
 
-    O campo `contexto` carrega o snapshot estatístico que o Front-end
-    exibirá ao cliente para justificar a entrada.
+    Retry automático (até _DB_MAX_RETRIES tentativas) para erros transientes
+    como 502 Bad Gateway, 429 Rate Limit, 503/504 Service Unavailable.
     """
     sinal_id = f"{tipo}_{slot['strategy_id']}_{epoch}_{client_id}"
 
@@ -282,31 +308,61 @@ async def _disparar_sinal(
         },
     }
 
-    # The centralized raw metrics table doesn't have client_id in the schema cache
+    # A tabela centralizada não tem client_id no schema
     if table_name != "hft_catalogo_estrategias":
         payload["client_id"] = client_id
 
-    try:
-        print(f"DEBUG DB: Payload sendo enviado: {payload}")
-        await asyncio.to_thread(
-            lambda: sb.table(table_name).insert(payload).execute()
-        )
-        logger.info(
-            "[SNIPER] %-12s %s @ %s → %s (sizing=%.1fx | WR=%.1f%%)",
-            tipo,
-            slot["ativo"],
-            slot["hh_mm"],
-            slot["direcao"],
-            slot["sizing_override"],
-            slot["win_rate_g2"] * 100,
-        )
-        print(f"DEBUG DB: INSERT concluido com sucesso para {sinal_id}")
-    except Exception as exc:
-        logger.error(
-            "[SNIPER] Erro ao inserir sinal %s para %s @ %s: %s",
-            tipo, slot["ativo"], slot["hh_mm"], exc,
-        )
-        print(f"DEBUG DB: ERRO no INSERT - {exc}")
+    # ── Retry com Exponential Backoff ─────────────────────────────────────────
+    backoff = _DB_RETRY_BASE
+    last_exc: Optional[Exception] = None
+
+    for attempt in range(1, _DB_MAX_RETRIES + 1):
+        try:
+            await asyncio.to_thread(
+                lambda: sb.table(table_name).insert(payload).execute()
+            )
+            # Sucesso!
+            if attempt > 1:
+                logger.info(
+                    "[SNIPER] ✅ %-12s %s @ %s → %s (retry #%d OK)",
+                    tipo, slot["ativo"], slot["hh_mm"], slot["direcao"], attempt,
+                )
+            else:
+                logger.info(
+                    "[SNIPER] ✅ %-12s %s @ %s → %s (sizing=%.1fx | WR=%.1f%%)",
+                    tipo,
+                    slot["ativo"],
+                    slot["hh_mm"],
+                    slot["direcao"],
+                    slot["sizing_override"],
+                    slot["win_rate_g2"] * 100,
+                )
+            return  # sinal inserido com sucesso
+
+        except Exception as exc:
+            last_exc = exc
+            is_transient = _is_retryable_error(exc)
+
+            if is_transient and attempt < _DB_MAX_RETRIES:
+                logger.warning(
+                    "[SNIPER] ⚠️  Erro transiente (tentativa %d/%d) %s para %s @ %s: %s"
+                    " | Retry em %.1fs...",
+                    attempt, _DB_MAX_RETRIES,
+                    tipo, slot["ativo"], slot["hh_mm"],
+                    str(exc)[:120],   # trunca para não poluir o log
+                    backoff,
+                )
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2 + random.uniform(0, 0.5), _DB_RETRY_MAX)
+            else:
+                # Erro permanente OU esgotamos as tentativas
+                break
+
+    # Todas as tentativas falharam
+    logger.error(
+        "[SNIPER] ❌ Falha definitiva ao inserir %s para %s @ %s após %d tentativas: %s",
+        tipo, slot["ativo"], slot["hh_mm"], _DB_MAX_RETRIES, last_exc,
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -416,9 +472,12 @@ class DerivSniper:
         if epoch_agora == 0:
             return
 
-        ss       = epoch_agora % 60
-        mm_epoch = (epoch_agora // 60) % 60
-        hh_epoch = (epoch_agora // 3600) % 24
+        # Ajuste para BRT (UTC-3) na hora de ler a agenda (3 horas = 10800 segundos)
+        epoch_brt = epoch_agora - 10800
+
+        ss       = epoch_brt % 60
+        mm_epoch = (epoch_brt // 60) % 60
+        hh_epoch = (epoch_brt // 3600) % 24
 
         # PRE_SIGNAL: segundo :50 → dispara para o PRÓXIMO minuto (:xx+1:00)
         if ss == 50:

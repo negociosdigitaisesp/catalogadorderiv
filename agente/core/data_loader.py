@@ -405,7 +405,7 @@ class DataLoader:
     # MÉTODO 6: _check_depth — verifica profundidade mínima por ativo
     # ─────────────────────────────────────────────────────────────────────────
 
-    def _check_depth(self, db_path: str, min_per_ativo: int = 40000) -> bool:
+    def _check_depth(self, db_path: str, min_per_ativo: int = 80000) -> bool:
         """
         Retorna True se TODOS os ativos no catalog têm >= min_per_ativo registros.
         Retorna False (= redownload) se algum ativo está raso ou vazio.
@@ -423,7 +423,7 @@ class DataLoader:
             for ativo, n in rows:
                 if n < min_per_ativo:
                     logger.info(
-                        "[LOADER] %s tem apenas %d registros (min=%d) — redownload necessario.",
+                        "[LOADER] %s tem apenas %d registros (min=%d, ~60 dias) — redownload necessario.",
                         ativo, n, min_per_ativo,
                     )
                     return False
@@ -441,7 +441,7 @@ class DataLoader:
         db_path: str,
         app_id: str,
         granularity: int = 60,
-        count: int = 43200,
+        count: int = 86400,
         force_reset: bool = False,
     ) -> pd.DataFrame:
         """
@@ -466,11 +466,11 @@ class DataLoader:
         if not fresco:
             # Reseta para garantir schema v2 limpo + dados profundos
             self.reset_catalog(db_path)
-            logger.info("[LOADER] Buscando 30 dias completos da Deriv para %d ativos...", len(ativos))
+            logger.info("[LOADER] Buscando 60 dias completos da Deriv para %d ativos...", len(ativos))
             for idx, ativo in enumerate(ativos, 1):
                 logger.info("[LOADER] --- Ativo %d/%d: %s ---", idx, len(ativos), ativo)
                 try:
-                    candles   = await self.fetch_candles_deriv(ativo, granularity, count, app_id)
+                    candles   = await self.fetch_candles_deriv(ativo, granularity, count, app_id, days=60)
                     registros = self.parse_candles_to_catalog(candles, ativo)
                     n         = self.save_to_catalog(registros, db_path)
                     logger.info("[LOADER] %s: %d registros salvos.", ativo, n)
